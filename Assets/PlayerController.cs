@@ -2,10 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
+using System;
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(CapsuleCollider))]
 public class PlayerController : MonoBehaviour, PlayerInputModuleReceiver {
+
+	public static event Action onPlayerLanded;
 
 	[System.Serializable]
 	public struct MovementParameters 
@@ -174,6 +177,9 @@ public class PlayerController : MonoBehaviour, PlayerInputModuleReceiver {
 
 			if (!m_State.wasGrounded && m_State.isJumping)
 			{
+				if (onPlayerLanded != null)
+					onPlayerLanded();
+					
 				m_State.isJumping = false;
 			}
 		}
