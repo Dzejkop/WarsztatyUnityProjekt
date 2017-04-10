@@ -4,9 +4,6 @@ using UnityEngine;
 [Serializable]
 public class MouseLookHelper
 {
-    public string xAxisName;
-    public string yAxisName;
-
     public float xAxisSensitivity;
     public float yAxisSensitivity;
 

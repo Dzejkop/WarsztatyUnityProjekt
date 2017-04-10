@@ -18,6 +18,8 @@ public class PlayerController : MonoBehaviour, PlayerInputModuleReceiver {
 
 		public float airControlMultiplier;
 
+		public float breakSmoothingThreshold;
+
 		public AnimationCurve angleToForceFeedback;
 	}
 
@@ -140,8 +142,15 @@ public class PlayerController : MonoBehaviour, PlayerInputModuleReceiver {
 		{
 			float airControl = m_State.isJumping ? m_Parameters.airControlMultiplier : 1;
 
+			if (desiredSpeed < float.Epsilon)
+			{
+				forceFeedback *= 0;
+			}
+
+			Vector3 totalForce = (movementForce + forceFeedback) * airControl;
+
 			if (isAccelerating && currentVelocity.magnitude < desiredSpeed || !isAccelerating)
-				m_Body.AddForce((movementForce.normalized + forceFeedback) * airControl, ForceMode.Impulse);
+				m_Body.AddForce(totalForce, ForceMode.Impulse);
 		}
 	}
 
