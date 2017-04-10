@@ -5,7 +5,7 @@ using UnityEngine.Assertions;
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(CapsuleCollider))]
-public class PlayerController : MonoBehaviour {
+public class PlayerController : MonoBehaviour, PlayerInputModuleReceiver {
 
 	[System.Serializable]
 	public struct MovementParameters 
@@ -24,10 +24,6 @@ public class PlayerController : MonoBehaviour {
 	[System.Serializable]
 	public struct Settings 
 	{
-		public string horizontalInputAxisName;
-		public string verticalInputAxisName;
-		public string jumpInputAxisName;
-
 		public bool airControl;
 
 		public float groundCheckDistance;
@@ -42,6 +38,10 @@ public class PlayerController : MonoBehaviour {
 		public bool wasGrounded;
 		public bool isJumping;
 		public bool isGoingToJump;
+
+		public Vector2 currentMouseInput;
+		public Vector2 currentMovementInput;
+		public float currentJumpInput;
 	} 
 
 	public Camera m_Camera;
@@ -56,6 +56,20 @@ public class PlayerController : MonoBehaviour {
 
 	private State m_State;
 
+	public void onJump(float input)
+	{
+		m_State.currentJumpInput = input;
+	}
+    public void onMovement(Vector2 input)
+	{
+		m_State.currentMovementInput = input;
+	}
+
+    public void onMouseInput(Vector2 input)
+	{
+		m_State.currentMouseInput = input;
+	}
+
 	void Start () {
 		m_Camera = GetComponentInChildren<Camera>();
 		Assert.IsNotNull(m_Camera);
@@ -66,11 +80,13 @@ public class PlayerController : MonoBehaviour {
 	
 	void Update ()
 	{
-		Vector2 mouseInput = m_MouseLookHelper.GetInput();
+		Vector2 mouseInput = m_MouseLookHelper.ProcessInput(m_State.currentMouseInput);
 		m_Camera.transform.localRotation *= Quaternion.Euler(new Vector3(mouseInput.y, 0f, 0f));
 		transform.localRotation *= Quaternion.Euler(new Vector3(0f, mouseInput.x, 0f));
 
-		if (Input.GetAxis(m_Settings.jumpInputAxisName) > float.Epsilon && !m_State.isJumping)
+		m_Camera.transform.localRotation = m_MouseLookHelper.Clamp(m_Camera.transform.localRotation);
+
+		if (m_State.currentJumpInput > float.Epsilon && !m_State.isJumping)
 		{
 			m_State.isGoingToJump = true;
 		}
@@ -102,7 +118,7 @@ public class PlayerController : MonoBehaviour {
 			m_Body.AddForce(Vector3.up * m_Parameters.jumpForce, ForceMode.Impulse);
 		}
 
-		Vector2 input = GetInput();
+		Vector2 input = m_State.currentMovementInput;
 
 		Vector3 movementForce = transform.forward * input.y + m_Camera.transform.right * input.x;
 
@@ -127,14 +143,6 @@ public class PlayerController : MonoBehaviour {
 			if (isAccelerating && currentVelocity.magnitude < desiredSpeed || !isAccelerating)
 				m_Body.AddForce((movementForce.normalized + forceFeedback) * airControl, ForceMode.Impulse);
 		}
-	}
-
-	private Vector2 GetInput()
-	{
-		return new Vector2(
-			Input.GetAxis(m_Settings.horizontalInputAxisName),
-			Input.GetAxis(m_Settings.verticalInputAxisName)
-		);
 	}
 
 	void CheckIfGrounded()

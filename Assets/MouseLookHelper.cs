@@ -16,10 +16,10 @@ public class MouseLookHelper
     [Range(-90f, 0f)]
     public float inclinationMin;
 
-    public Vector2 GetInput() {
+    public Vector2 ProcessInput(Vector2 i) {
         return new Vector2(
-            Input.GetAxis(xAxisName) * xAxisSensitivity,
-            -Input.GetAxis(yAxisName) * yAxisSensitivity
+            i.x * xAxisSensitivity,
+            i.y * yAxisSensitivity
         );
     }    
 
