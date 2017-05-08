@@ -14,8 +14,9 @@ public class HealthModule : MonoBehaviour {
 		public float healthRegenPerSecond;
 	}
 
-	public Parameters m_Parameters;
+	public Parameters parameters;
 	
+	[System.Serializable]
 	public struct State
 	{
 		public bool isAlive;
@@ -23,7 +24,7 @@ public class HealthModule : MonoBehaviour {
 		public bool regenEnabled;
 	}
 
-	private State m_State;
+	private State _state;
 
 #region PublicInterface
 
@@ -33,34 +34,45 @@ public class HealthModule : MonoBehaviour {
 		public UnityEvent onDeath;
 	}
 
-	public EventInterface m_Events;
+	public EventInterface events;
+
+	void Start()
+	{
+		_state.health = parameters.startingHealth;
+		_state.isAlive = true;
+		_state.regenEnabled = true;
+	}
 
 	public void TakeDamage(float dmg)
 	{
-		if (m_State.health > 0)
-			m_State.health -= dmg;
-
-		if (m_State.isAlive && m_State.health < 0f)
+		if (_state.isAlive && _state.health > 0)
 		{
-			m_State.isAlive = false;
-			m_State.health = 0f;
-			m_Events.onDeath.Invoke();
+			Debug.Log("Ouch, " + gameObject.name + " is taking damage.");
+			_state.health -= dmg;
+		}
+
+		if (_state.isAlive && _state.health <= 0f)
+		{
+			Debug.Log("Ouch, " + gameObject.name + " is dying :(");
+			_state.isAlive = false;
+			_state.health = 0f;
+			events.onDeath.Invoke();
 		}
 	}
 
 	public void EnableRegen()
 	{
-		m_State.regenEnabled = true;
+		_state.regenEnabled = true;
 	}
 
 	public void DisableRegen()
 	{
-		m_State.regenEnabled = false;
+		_state.regenEnabled = false;
 	}
 
 	public bool IsDead()
 	{
-		return m_State.isAlive;
+		return _state.isAlive;
 	}
 
 #endregion
