@@ -1,66 +1,48 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.Events;
 
-public class RigidbodyPrefabLauncher : MonoBehaviour {
-
-	[System.Serializable]
+public class RigidbodyPrefabLauncher : MonoBehaviour
+{
+	[System.SerializableAttribute]
 	public struct Parameters
 	{
-		public GameObject prefab;
-		public float delay;
-		public float force;
-		public Transform spawnPosition;
-		public Vector3 direction;
-		public float randomRecoilMagnitude;
-		public bool startEnabled;
+		public float recoil;
+		public GameObject rocketPrefab;
+
+		public float launchForce;
+		public ForceMode forceMode;
+
+		public Transform launchMuzzle;
+		public Transform aimingReference;
+
+		public LayerMask castLayerMask;
+		public float castRange;
 	}
 
-	public Parameters m_Parameters;
+	public Parameters parameters;
 
-	public struct State
+	public void Fire()
 	{
-		public bool isSpawning;
-	}
+		Vector3 direction = parameters.launchMuzzle.forward;
 
-	private State m_State;
+		RaycastHit hit;
 
-	void Start()
-	{
-		m_State.isSpawning = m_Parameters.startEnabled;
-
-		StartCoroutine(SpawningCoroutine());
-	}
-
-	IEnumerator SpawningCoroutine()
-	{
-		while (true)
+		if (Physics.Raycast(
+			parameters.aimingReference.position, 
+			parameters.aimingReference.forward,
+			out hit,
+			parameters.castRange, parameters.castLayerMask))
 		{
-			yield return new WaitForSeconds(m_Parameters.delay);
-			if (m_State.isSpawning)
-				Go();
+			direction = (hit.point - parameters.launchMuzzle.position).normalized;
 		}
-	}
 
-	public void Go()
-	{
-		GameObject obj = Instantiate(m_Parameters.prefab, m_Parameters.spawnPosition.position, Quaternion.identity);
+		GameObject go = Instantiate(parameters.rocketPrefab, parameters.launchMuzzle.position, parameters.launchMuzzle.rotation);
 
-		Rigidbody body = obj.GetComponent<Rigidbody>();
+		Rigidbody goBody = go.GetComponent<Rigidbody>();
 
-		Vector3 recoil = new Vector3(Random.Range(-1f, 1f), Random.Range(-1f, 1f), Random.Range(-1f, 1f));
-		recoil = recoil.normalized * m_Parameters.randomRecoilMagnitude;
-
-		body.velocity = recoil + (transform.TransformVector(m_Parameters.direction.normalized) * m_Parameters.force);
-	}
-
-	public void Begin() 
-	{
-		m_State.isSpawning = true;
-	}
-
-	public void Stop()
-	{
-		m_State.isSpawning = false;
+		if (goBody != null)
+		{
+			goBody.AddForce(direction * parameters.launchForce, parameters.forceMode);
+		}
 	}
 }

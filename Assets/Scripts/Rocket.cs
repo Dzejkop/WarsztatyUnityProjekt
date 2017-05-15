@@ -12,6 +12,8 @@ public class Rocket : MonoBehaviour {
 
 		public bool unconditionalExplosion;
 
+		public float damage;
+
 		public float explosionRange;
 		public float explosionForce;
 		public ForceMode explosionForceMode;
@@ -70,8 +72,8 @@ public class Rocket : MonoBehaviour {
 		if (isExploded)
 			return;
 
-		GameObject explosion = Instantiate(m_Parameters.explosionPrefab, transform.position, Quaternion.identity);
-		explosion.transform.up = m_CurrentCollisionNormal;
+		if (m_Parameters.explosionPrefab != null)
+			Instantiate(m_Parameters.explosionPrefab, transform.position, transform.rotation);
 
 		RaycastHit[] hits = Physics.SphereCastAll(transform.position, m_Parameters.explosionRange, Vector3.up, 1, m_Parameters.explosionLayerMask, QueryTriggerInteraction.Ignore);
 
@@ -90,6 +92,12 @@ public class Rocket : MonoBehaviour {
 					h.point,
 					m_Parameters.explosionForceMode
 					);
+
+				HealthModule healthModule = h.rigidbody.GetComponent<HealthModule>();
+				if (healthModule != null)
+				{
+					healthModule.TakeDamage(m_Parameters.damage);
+				}
 			}
 		}
 
